@@ -1,0 +1,114 @@
+.photo-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	gap: 12px;
+	padding: 16px;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+}
+
+.sortable {
+	height: 200px;
+	border-radius: 8px;
+	touch-action: none;
+	overflow: hidden;
+	position: relative;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	cursor: pointer;
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+}
+
+.sortable:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sortable.selected {
+	box-shadow: 0 0 0 3px #0088ff, 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.selected-overlay {
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background-color: #0088ff;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.selected-overlay::after {
+	content: "✓";
+	color: white;
+	font-size: 12px;
+	font-weight: bold;
+}
+
+.wide-item {
+	grid-column: span 2;
+}
+
+.sortable img {
+	height: 100%;
+	width: 100%;
+	touch-action: none;
+	pointer-events: none;
+	object-fit: cover;
+}
+
+.photo-number {
+	position: absolute;
+	bottom: 5px;
+	right: 5px;
+	color: white;
+	background: rgba(0,0,0,0.5);
+	padding: 2px 5px;
+	border-radius: 3px;
+	font-size: 12px;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+}
+
+.selection-help {
+	color: #666;
+	font-size: 14px;
+	margin: 0 0 10px;
+	padding: 0 16px;
+}
+
+.add-image-tile {
+	height: 200px;
+	border-radius: 8px;
+	background-color: #f5f5f5;
+	border: 2px dashed #ddd;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.add-image-tile:hover {
+	transform: translateY(-2px);
+	background-color: #eaeaea;
+	border-color: #bbb;
+}
+
+.add-image-icon {
+	font-size: 60px;
+	color: #aaa;
+	font-weight: 100;
+}

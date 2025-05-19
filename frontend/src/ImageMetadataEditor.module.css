@@ -1,0 +1,210 @@
+.container {
+  max-width: 100%;
+  padding: 15px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.statusMessage {
+  padding: 12px 15px;
+  border-radius: 4px;
+  margin: 10px 0;
+  animation: fadeIn 0.3s ease;
+}
+
+.success {
+  background-color: #e6f7e6;
+  color: #2c662d;
+  border-left: 4px solid #4caf50;
+}
+
+.error {
+  background-color: #ffeaea;
+  color: #c62828;
+  border-left: 4px solid #f44336;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropzone {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 30px 15px;
+  text-align: center;
+  margin: 15px 0;
+  transition: all 0.3s ease;
+  background-color: #f9f9f9;
+  cursor: pointer;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.dragging {
+  border-color: #0088ff;
+  background-color: rgba(0, 136, 255, 0.05);
+}
+
+.dropzone p {
+  margin-bottom: 15px;
+  font-size: 15px;
+  color: #555;
+}
+
+.dropzone input[type="file"] {
+  display: none;
+}
+
+.fileButton {
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: #0088ff;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.fileButton:hover {
+  background-color: #0066cc;
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin: 15px 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.imagePreview {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-height: 200px;
+}
+
+.imagePreview img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.metadataForm {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.formGroup label {
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #333;
+}
+
+.formGroup input,
+.formGroup textarea {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.formGroup textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus {
+  outline: none;
+  border-color: #0088ff;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  justify-content: flex-end;
+}
+
+.buttonGroup button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s, opacity 0.2s;
+}
+
+.buttonGroup button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  background-color: #f1f1f1;
+  color: #333;
+}
+
+.cancelButton:hover:not(:disabled) {
+  background-color: #e5e5e5;
+}
+
+.saveButton {
+  background-color: #0088ff;
+  color: white;
+}
+
+.saveButton:hover:not(:disabled) {
+  background-color: #0066cc;
+}
+
+.deleteContainer {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.deleteButton {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s, transform 0.1s;
+  width: 100%;
+}
+
+.deleteButton:hover {
+  background-color: #d32f2f;
+}
+
+.deleteButton:active {
+  transform: scale(0.98);
+}
+
+.confirmDelete {
+  background-color: #b71c1c;
+}
+
