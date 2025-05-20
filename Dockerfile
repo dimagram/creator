@@ -7,7 +7,7 @@ COPY frontend/ ./
 RUN pnpm build
 
 # Build stage for backend
-FROM golang:1.22-alpine AS backend-build
+FROM golang:1.24-alpine AS backend-build
 WORKDIR /app/backend
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
@@ -29,5 +29,5 @@ ENV PORT=8080
 # Expose port
 EXPOSE 8080
 
-ENTRYPOINT["/app/dimagram"]
+ENTRYPOINT ["/app/dimagram"]
 CMD ["server"]

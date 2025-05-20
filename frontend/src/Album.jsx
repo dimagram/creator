@@ -77,7 +77,7 @@ export const Album = (props) => {
 
 	// Load album data from API
 	const loadAlbumData = async () => {
-		const response = await fetch('http://localhost:8080/api/album');
+		const response = await fetch('/api/album');
 		if (response.ok) {
 			const data = await response.json();
 			setAlbumData(data);
