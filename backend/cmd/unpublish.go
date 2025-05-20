@@ -76,14 +76,14 @@ func unpublishProcess() {
 			fmt.Printf("Error uploading to SFTP server: %v\n", err)
 			os.Exit(1)
 		}
-		
+
 		// Invalidate CDN cache
 		if err := invalidateCache(); err != nil {
 			fmt.Printf("Warning: Failed to invalidate CDN cache: %v\n", err)
 			// Continue execution even if cache invalidation fails
 		}
-		
-		fmt.Printf("Updated SFTP 'today' file to point to the new last item: %v\n", newLastItem.ID)
+
+		fmt.Printf("Updated SFTP 'today.json' file to point to the new last item: %v\n", newLastItem.ID)
 	}
 
 	// 6. Write back to archive.json
@@ -110,5 +110,6 @@ func unpublishProcess() {
 		os.Exit(1)
 	}
 
-	fmt.Println("Successfully unpublished the image, updated SFTP 'today' file, invalidated cache, moved item from archive to album.")
+	fmt.Println("Successfully unpublished the image, updated SFTP 'today.json' file, invalidated cache, moved item from archive to album.")
 }
+

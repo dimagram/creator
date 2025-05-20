@@ -11,11 +11,11 @@ import './Album.css';
 
 // Function to generate a UUID v4
 const generateUUID = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
+	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+		const r = Math.random() * 16 | 0;
+		const v = c === 'x' ? r : (r & 0x3 | 0x8);
+		return v.toString(16);
+	});
 };
 
 const Sortable = (props) => {
@@ -149,12 +149,12 @@ export const Album = (props) => {
 		setAlbumData(updatedItems);
 		setSelectedItemId(null);
 	};
-	
+
 	// Function to add a new empty image
 	const addNewImage = () => {
 		const currentItems = albumData();
 		const newImageId = generateUUID();
-		
+
 		// Create a new empty image entry
 		const newImage = {
 			id: newImageId,
@@ -162,14 +162,14 @@ export const Album = (props) => {
 			description: '',
 			credits: ''
 		};
-		
+
 		// Add to album data
 		const updatedItems = [...currentItems, newImage];
 		setAlbumData(updatedItems);
-		
+
 		// Select the new image for editing
 		handleItemSelect(newImage);
-		
+
 		// Notify parent of change for autosave
 		if (props.onAlbumChange) {
 			props.onAlbumChange();
@@ -198,8 +198,7 @@ export const Album = (props) => {
 			collisionDetector={closestCenter}
 		>
 			<DragDropSensors />
-			<h1>Image Gallery</h1>
-			<p class="selection-help">Click on an image to edit its metadata</p>
+			<h1>Queue</h1>
 			<div class="photo-grid">
 				<SortableProvider ids={ids()}>
 					<For each={albumData()}>

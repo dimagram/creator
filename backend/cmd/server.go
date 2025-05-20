@@ -12,9 +12,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var (
-	port string
-)
+var port string
 
 var serverCmd = &cobra.Command{
 	Use:   "server",
@@ -119,7 +117,7 @@ func startServer() {
 			}
 
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"status":"ok"}`))  
+			w.Write([]byte(`{"status":"ok"}`))
 			return
 		}
 
@@ -138,7 +136,7 @@ func startServer() {
 	serverPort := viper.GetString("server.port")
 
 	// Start the server
-	log.Printf("Starting server at http://localhost:%s", serverPort)
+	log.Printf("Starting server at http://:%s", serverPort)
 	if err := http.ListenAndServe(":"+serverPort, handler); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}

@@ -194,7 +194,7 @@ func uploadToSFTP(item AlbumItem) error {
 	}
 
 	// Create a file on the SFTP server
-	remoteFile, err := sftpClient.Create("today")
+	remoteFile, err := sftpClient.Create("today.json")
 	if err != nil {
 		return fmt.Errorf("failed to create remote file: %v", err)
 	}
@@ -206,7 +206,7 @@ func uploadToSFTP(item AlbumItem) error {
 		return fmt.Errorf("failed to write to remote file: %v", err)
 	}
 
-	fmt.Println("Successfully uploaded item to SFTP server as 'today'")
+	fmt.Println("Successfully uploaded item to SFTP server as 'today.json'")
 	return nil
 }
 
@@ -223,7 +223,7 @@ func invalidateCache() error {
 	}
 
 	// Construct purge URL for the "today" file
-	purgeURL := fmt.Sprintf("https://api.bunny.net/purge?url=%s/today", cdnURL)
+	purgeURL := fmt.Sprintf("https://api.bunny.net/purge?url=%s/today.json", cdnURL)
 
 	// Create HTTP request
 	req, err := http.NewRequest("POST", purgeURL, bytes.NewBuffer([]byte{}))
@@ -251,6 +251,7 @@ func invalidateCache() error {
 		return fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(body))
 	}
 
-	fmt.Println("Successfully invalidated CDN cache for 'today' file")
+	fmt.Println("Successfully invalidated CDN cache for 'today.json' file")
 	return nil
 }
+
