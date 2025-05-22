@@ -23,7 +23,6 @@ func initConfig() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.AddCommand(cmd.GetServerCmd())
-	rootCmd.AddCommand(cmd.GetPublishCmd())
 	rootCmd.AddCommand(cmd.GetUnpublishCmd())
 }
 

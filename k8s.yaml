@@ -83,26 +83,23 @@ spec:
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: dimagram-publish
+  name: dimagram-publish-trigger
   namespace: dimagram
 spec:
-  schedule: "0 0 * * *"
+  schedule: "0 0 * * *"  # Run at midnight every day
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
       template:
         spec:
           containers:
-          - name: dimagram
-            image: ghcr.io/dimagram/creator
-            args: ["publish"]
-            envFrom:
-            - secretRef:
-                name: dimagram-env
-            volumeMounts:
-            - name: data
-              mountPath: /app/data
-          volumes:
-          - name: data
-            persistentVolumeClaim:
-              claimName: data-dimagram-0
+          - name: curl
+            image: curlimages/curl:7.87.0
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - curl -X POST http://dimagram:8080/api/publish -H "Content-Type: application/json" -f -s -S
           restartPolicy: OnFailure
