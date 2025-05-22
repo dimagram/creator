@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -250,6 +251,120 @@ func startServer() {
 	fileServer := http.FileServer(http.Dir("./frontend"))
 	mux.Handle("/", fileServer)
 
+	// Add upload endpoint
+	mux.HandleFunc("/api/upload", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		// Handle OPTIONS request (preflight)
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Only allow POST requests
+		if r.Method != "POST" {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Max upload size of 10MB
+		r.ParseMultipartForm(10 << 20)
+		
+		// Get the file from the request
+		file, handler, err := r.FormFile("file")
+		if err != nil {
+			http.Error(w, "Error retrieving the file", http.StatusBadRequest)
+			log.Printf("Error retrieving file: %v", err)
+			return
+		}
+		defer file.Close()
+
+		// Create uploads directory if it doesn't exist
+		uploadDir := "data/uploads"
+		if err := os.MkdirAll(uploadDir, 0o755); err != nil {
+			http.Error(w, "Error creating upload directory", http.StatusInternalServerError)
+			log.Printf("Error creating upload directory: %v", err)
+			return
+		}
+
+		// Get file extension from original filename
+		fileExt := filepath.Ext(handler.Filename)
+		
+		// Create a temporary filename and path - will be renamed after hash is calculated
+		tempFilename := fmt.Sprintf("temp-%d%s", time.Now().UnixNano(), fileExt)
+		filePath := fmt.Sprintf("%s/%s", uploadDir, tempFilename)
+		
+		// Create the file on the server
+		dst, err := os.Create(filePath)
+		if err != nil {
+			http.Error(w, "Error creating file on server", http.StatusInternalServerError)
+			log.Printf("Error creating file: %v", err)
+			return
+		}
+		
+		// Always delete the local file when we're done
+		defer os.Remove(filePath)
+		
+		// Set up hasher and multiwriter to write file and compute hash simultaneously
+		hasher := sha256.New()
+		writer := io.MultiWriter(dst, hasher)
+		
+		// Copy data from source to both the file and hasher
+		if _, err := io.Copy(writer, file); err != nil {
+			http.Error(w, "Error saving file on server", http.StatusInternalServerError)
+			log.Printf("Error saving file: %v", err)
+			return
+		}
+		
+		// Get the hash result and create final filename
+		hashBytes := hasher.Sum(nil)
+		hashString := fmt.Sprintf("%x", hashBytes)
+		filename := hashString + fileExt
+		finalPath := fmt.Sprintf("%s/%s", uploadDir, filename)
+		
+		// Close the file
+		dst.Close()
+		
+		// Rename file to hash-based name if temp and final names are different
+		if finalPath != filePath {
+			// First remove any existing file with the same name
+			os.Remove(finalPath)
+			// Then rename our file
+			if err := os.Rename(filePath, finalPath); err != nil {
+				log.Printf("Error renaming file: %v", err)
+				// Continue with the temp file if rename fails
+			} else {
+				// Update path if rename succeeded
+				filePath = finalPath
+				// Update defer to remove the new path
+				defer os.Remove(finalPath)
+			}
+		}
+		
+		// Upload the file to SFTP
+		if err := uploadFileToSFTP(filePath, filename); err != nil {
+			http.Error(w, "Error uploading file to SFTP", http.StatusInternalServerError)
+			log.Printf("Error uploading to SFTP: %v", err)
+			return
+		}
+
+		// Get CDN URL from environment
+		godotenv.Load()
+		cdnURL := os.Getenv("BUNNY_CDN_URL")
+		if cdnURL == "" {
+			cdnURL = "https://example.com" // Fallback if not set
+		}
+
+		// Return the URL for the uploaded file
+		imageURL := fmt.Sprintf("%s/content/%s", cdnURL, filename)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"url": imageURL,
+		})
+	})
+
 	// Apply logging middleware to all requests
 	handler := loggingMiddleware(mux)
 
@@ -392,5 +507,98 @@ func invalidateCache() error {
 	}
 
 	log.Println("Successfully invalidated CDN cache for 'today.json' file")
+	return nil
+}
+
+func uploadFileToSFTP(localFilePath, remoteFileName string) error {
+	godotenv.Load()
+
+	// Get SFTP credentials from environment
+	host := os.Getenv("SFTP_HOST")
+	portStr := os.Getenv("SFTP_PORT")
+	user := os.Getenv("SFTP_USER")
+	password := os.Getenv("SFTP_PASSWORD")
+	keyPath := os.Getenv("SFTP_PRIVATE_KEY_PATH")
+
+	// Validate required environment variables
+	if host == "" || user == "" || (password == "" && keyPath == "") {
+		return fmt.Errorf("required SFTP environment variables not set")
+	}
+
+	// Default port is 22 if not specified
+	port := 22
+	if portStr != "" {
+		var err error
+		port, err = strconv.Atoi(portStr)
+		if err != nil {
+			return fmt.Errorf("invalid SFTP port: %v", err)
+		}
+	}
+
+	// Configure SSH client
+	var authMethods []ssh.AuthMethod
+	if password != "" {
+		authMethods = append(authMethods, ssh.Password(password))
+	} else if keyPath != "" {
+		key, err := os.ReadFile(keyPath)
+		if err != nil {
+			return fmt.Errorf("unable to read private key: %v", err)
+		}
+
+		signer, err := ssh.ParsePrivateKey(key)
+		if err != nil {
+			return fmt.Errorf("unable to parse private key: %v", err)
+		}
+		authMethods = append(authMethods, ssh.PublicKeys(signer))
+	}
+
+	config := &ssh.ClientConfig{
+		User:            user,
+		Auth:            authMethods,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // Note: This is not secure for production
+		Timeout:         15 * time.Second,
+	}
+
+	// Connect to SFTP server
+	addr := fmt.Sprintf("%s:%d", host, port)
+	sshClient, err := ssh.Dial("tcp", addr, config)
+	if err != nil {
+		return fmt.Errorf("failed to connect to SSH server: %v", err)
+	}
+	defer sshClient.Close()
+
+	// Create SFTP client
+	sftpClient, err := sftp.NewClient(sshClient)
+	if err != nil {
+		return fmt.Errorf("failed to create SFTP client: %v", err)
+	}
+	defer sftpClient.Close()
+
+	// Open local file
+	localFile, err := os.Open(localFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to open local file: %v", err)
+	}
+	defer localFile.Close()
+
+	// Ensure content directory exists on remote server
+	contentDir := "content"
+	sftpClient.MkdirAll(contentDir)
+
+	// Create a file on the SFTP server in the content directory
+	remoteFilePath := fmt.Sprintf("%s/%s", contentDir, remoteFileName)
+	remoteFile, err := sftpClient.Create(remoteFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to create remote file: %v", err)
+	}
+	defer remoteFile.Close()
+
+	// Copy local file to remote
+	_, err = io.Copy(remoteFile, localFile)
+	if err != nil {
+		return fmt.Errorf("failed to write to remote file: %v", err)
+	}
+
+	log.Printf("Successfully uploaded file to SFTP server at '%s'", remoteFilePath)
 	return nil
 }

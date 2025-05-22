@@ -152,13 +152,19 @@ export const Album = (props) => {
 
 	// Function to add a new empty image
 	const addNewImage = () => {
+		// Use placeholder URL for empty images
+		addNewImageWithUrl('https://placehold.co/400x400?text=New+Image');
+	};
+	
+	// Function to add a new image with a specific URL
+	const addNewImageWithUrl = (url) => {
 		const currentItems = albumData();
 		const newImageId = generateUUID();
 
-		// Create a new empty image entry
+		// Create a new image entry with the specified URL
 		const newImage = {
 			id: newImageId,
-			url: 'https://placehold.co/400x400?text=New+Image',
+			url: url,
 			description: '',
 			credits: ''
 		};
@@ -176,6 +182,17 @@ export const Album = (props) => {
 		}
 	};
 
+	// Set up a method to select an image by ID (for external use)
+	const selectImageById = (id) => {
+		const item = albumData().find(item => item.id === id);
+		if (item) {
+			setSelectedItemId(id);
+			if (props.onSelectImage) {
+				props.onSelectImage(item);
+			}
+		}
+	};
+
 	// Create a single ref object with all methods
 	const refObj = {
 		clearSelection,
@@ -183,7 +200,9 @@ export const Album = (props) => {
 		setAlbumData,
 		updateItemMetadata,
 		deleteItem,
-		addNewImage
+		addNewImage,
+		addNewImageWithUrl,
+		selectImageById
 	};
 
 	// Expose methods to parent via ref if provided

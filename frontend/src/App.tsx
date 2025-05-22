@@ -33,20 +33,32 @@ const App: Component = () => {
 
 	// Function to save the updated metadata back to the album
 	const handleSaveMetadata = (updatedImage: ImageData) => {
+		const albumRefValue = albumRef();
+		if (!albumRefValue) return;
+		
 		// Update the image metadata in the album
-		if (albumRef() && albumRef().updateItemMetadata) {
-			albumRef().updateItemMetadata(updatedImage.id, {
-				url: updatedImage.url,
-				description: updatedImage.description,
-				credits: updatedImage.credits
-			});
+		albumRefValue.updateItemMetadata(updatedImage.id, {
+			url: updatedImage.url,
+			description: updatedImage.description,
+			credits: updatedImage.credits
+		});
 
-			// Autosave to API
-			saveAlbumJson();
-		}
-
+		// Autosave to API
+		saveAlbumJson();
+		
 		// Update the selected image with the new metadata
 		setSelectedImage(updatedImage);
+	};
+	
+	// Function to add a new image with a specific URL (for uploads)
+	const handleNewImage = (imageUrl: string) => {
+		const albumRefValue = albumRef();
+		if (!albumRefValue || !albumRefValue.addNewImageWithUrl) return;
+		
+		// Use the Album's method to add a new image with the provided URL
+		albumRefValue.addNewImageWithUrl(imageUrl);
+		
+		// The Album component will handle selection and save automatically
 	};
 
 	// Function to delete an image from the album
@@ -110,6 +122,7 @@ const App: Component = () => {
 						onCancel={handleCancel}
 						onSave={handleSaveMetadata}
 						onDelete={handleDeleteImage}
+						onNewImage={handleNewImage}
 					/>
 				</div>
 			</main>

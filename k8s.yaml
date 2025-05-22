@@ -98,8 +98,5 @@ spec:
           - name: curl
             image: curlimages/curl:7.87.0
             imagePullPolicy: IfNotPresent
-            command:
-            - /bin/sh
-            - -c
-            - curl -X POST http://dimagram:8080/api/publish -H "Content-Type: application/json" -f -s -S
+            command: ["/bin/sh", "-c", "curl -X POST http://dimagram:8080/api/publish -H \"Content-Type: application/json\" -f -s -S"]
           restartPolicy: OnFailure

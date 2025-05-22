@@ -8,11 +8,16 @@ interface ImageData {
   credits?: string;
 }
 
+interface UploadResponse {
+  url: string;
+}
+
 interface ImageMetadataEditorProps {
   selectedImage?: ImageData | null;
   onCancel?: () => void;
   onSave?: (imageData: ImageData) => void;
   onDelete?: (imageId: number) => void;
+  onNewImage?: (imageUrl: string) => void;
 }
 
 const ImageMetadataEditor: Component<ImageMetadataEditorProps> = (props) => {
@@ -21,6 +26,9 @@ const ImageMetadataEditor: Component<ImageMetadataEditorProps> = (props) => {
   const [credits, setCredits] = createSignal('');
   const [statusMessage, setStatusMessage] = createSignal('');
   const [deleteConfirm, setDeleteConfirm] = createSignal(false);
+  const [isDragging, setIsDragging] = createSignal(false);
+  const [isUploading, setIsUploading] = createSignal(false);
+  let fileInputRef;
 
   // Listen for changes to the selectedImage prop
   createEffect(() => {
@@ -100,6 +108,41 @@ const ImageMetadataEditor: Component<ImageMetadataEditorProps> = (props) => {
     }
   };
   
+  // Handle file upload
+  const handleFileUpload = async (file: File) => {
+    try {
+      setIsUploading(true);
+      setStatusMessage('Uploading image...');
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.statusText}`);
+      }
+      
+      const data: UploadResponse = await response.json();
+      
+      // Use the onNewImage callback to add a new image with the uploaded URL
+      if (props.onNewImage) {
+        props.onNewImage(data.url);
+        setStatusMessage('Image uploaded successfully!');
+      } else {
+        setStatusMessage('Error: Cannot add the image to album');
+      }
+    } catch (error) {
+      setStatusMessage(`Error: ${error.message}`);
+      console.error('Upload error:', error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+  
   return (
     <div class={styles.container}>
       <h2>Image Metadata Editor</h2>
@@ -113,8 +156,38 @@ const ImageMetadataEditor: Component<ImageMetadataEditorProps> = (props) => {
       <Show
         when={props.selectedImage}
         fallback={
-          <div class={styles.dropzone}>
-            <p>Click on an image from the gallery to edit its metadata</p>
+          <div 
+            class={`${styles.dropzone} ${isDragging() ? styles.dragging : ''}`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setIsDragging(false);
+              
+              if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+                handleFileUpload(e.dataTransfer.files[0]);
+              }
+            }}
+            onClick={() => fileInputRef && fileInputRef.click()}
+          >
+            <input 
+              type="file" 
+              accept="image/*"
+              ref={el => fileInputRef = el}
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  handleFileUpload(e.target.files[0]);
+                }
+              }}
+            />
+            <p>Drop an image here or click to upload</p>
+            <label class={styles.fileButton}>
+              Select Image
+            </label>
+            {isUploading() && <p>Uploading...</p>}
           </div>
         }
       >
